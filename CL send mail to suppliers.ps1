@@ -76,6 +76,12 @@ Begin {
                 throw "Input file '$ImportFile': Property 'Name' is missing in 'Suppliers'."
             }
             #endregion
+
+            #region MailTo
+            if (-not $s.MailTo) {
+                throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers'."
+            }
+            #endregion
         }
         #endregion
     }

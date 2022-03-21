@@ -154,6 +154,27 @@ Describe 'send an e-mail to the admin when' {
                         $EntryType -eq 'Error'
                     }
                 }
+                It 'MailTo is missing' {
+                    @{
+                        MailTo    = @('bob@contoso.com')
+                        Suppliers = @(
+                            @{
+                                Name   = 'Picard'
+                                Path   = 'TestDrive:/'
+                                # MailTo = 'bob@contoso.com'
+                            }
+                        )
+                    } | ConvertTo-Json | Out-File @testOutParams
+                    
+                    .$testScript @testParams
+                    
+                    Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                        (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'MailTo' is missing in 'Suppliers'*")
+                    }
+                    Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                        $EntryType -eq 'Error'
+                    }
+                }
             }
         }
     }
