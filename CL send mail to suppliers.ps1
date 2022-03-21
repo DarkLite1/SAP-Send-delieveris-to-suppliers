@@ -66,9 +66,6 @@ Begin {
             if (-not $s.Path) {
                 throw "Input file '$ImportFile': No 'Path' found in one of the 'Suppliers'."
             }
-            if (-not ($s.Path -Match '^\\\\')) {
-                throw "Input file '$ImportFile': 'Path' needs to be a UNC path"
-            }
             if (-not (Test-Path -LiteralPath $s.Path -PathType Container)) {
                 throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found"
             }

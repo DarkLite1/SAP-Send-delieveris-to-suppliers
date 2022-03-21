@@ -112,6 +112,27 @@ Describe 'send an e-mail to the admin when' {
                         $EntryType -eq 'Error'
                     }
                 }
+                It 'Path does not exist' {
+                    @{
+                        MailTo    = @('bob@contoso.com')
+                        Suppliers = @(
+                            @{
+                                Name   = 'Picard'
+                                Path   = 'C:/notExisting'
+                                MailTo = 'bob@contoso.com'
+                            }
+                        )
+                    } | ConvertTo-Json | Out-File @testOutParams
+                    
+                    .$testScript @testParams
+                    
+                    Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                        (&$MailAdminParams) -and ($Message -like "*$ImportFile*'Path' folder 'C:/notExisting' not found*")
+                    }
+                    Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                        $EntryType -eq 'Error'
+                    }
+                }
             }
         }
     }
