@@ -84,7 +84,7 @@ Describe 'send an e-mail to the admin when' {
                 .$testScript @testParams
                 
                 Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
-                    (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'Destinations' found*")
+                    (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'Suppliers' found*")
                 }
                 Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                     $EntryType -eq 'Error'
