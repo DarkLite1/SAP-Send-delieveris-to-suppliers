@@ -62,24 +62,24 @@ Begin {
             throw "Input file '$ImportFile': No 'Suppliers' found."
         }
         foreach ($s in $Suppliers) {
-            #region Path
-            if (-not $s.Path) {
-                throw "Input file '$ImportFile': Property 'Path' is missing in 'Suppliers'."
-            }
-            if (-not (Test-Path -LiteralPath $s.Path -PathType Container)) {
-                throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found"
-            }
-            #endregion
-            
             #region Name
             if (-not $s.Name) {
                 throw "Input file '$ImportFile': Property 'Name' is missing in 'Suppliers'."
             }
             #endregion
 
+            #region Path
+            if (-not $s.Path) {
+                throw "Input file '$ImportFile': Property 'Path' is missing in 'Suppliers' for '$($s.Name)'."
+            }
+            if (-not (Test-Path -LiteralPath $s.Path -PathType Container)) {
+                throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found for '$($s.Name)'"
+            }
+            #endregion
+            
             #region MailTo
             if (-not $s.MailTo) {
-                throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers'."
+                throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers' for '$($s.Name)'."
             }
             #endregion
         }
