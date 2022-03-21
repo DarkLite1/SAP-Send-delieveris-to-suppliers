@@ -1,0 +1,15 @@
+{
+  "MailTo": ["picard@starfleet.com"],
+  "Suppliers": [
+    {
+      "Name": "Starfleet",
+      "Path": "\\\\star base\\OUT",
+      "MailTo": ["picard@starfleet.com"]
+    },
+    {
+      "Name": "Klingons",
+      "Path": "\\\\kronos\\OUT",
+      "MailTo": ["worf@kronos.com"]
+    }
+  ]
+}
