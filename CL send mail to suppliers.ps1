@@ -70,6 +70,12 @@ Begin {
                 throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found"
             }
             #endregion
+            
+            #region Name
+            if (-not $s.Name) {
+                throw "Input file '$ImportFile': Property 'Name' is missing in 'Suppliers'."
+            }
+            #endregion
         }
         #endregion
     }
