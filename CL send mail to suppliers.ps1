@@ -27,6 +27,20 @@ Param (
 )
 
 Begin {
+    Function Test-ValidEmailAddress { 
+        Param(
+            [Parameter(Mandatory)]
+            [String]$EmailAddress
+        )
+        try {
+            $null = [MailAddress]$EmailAddress
+            return $true
+        }
+        catch {
+            return $false
+        }
+    }
+
     try {
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
@@ -80,6 +94,9 @@ Begin {
             #region MailTo
             if (-not $s.MailTo) {
                 throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers' for '$($s.Name)'."
+            }
+            if (-not (Test-ValidEmailAddress -EmailAddress $s.MailTo)) {
+                throw "Input file '$ImportFile': 'MailTo' value '$($s.MailTo)' is not a valid e-mail address for supplier '$($s.Name)'."
             }
             #endregion
         }
