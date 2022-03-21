@@ -64,7 +64,7 @@ Begin {
         foreach ($s in $Suppliers) {
             #region Path
             if (-not $s.Path) {
-                throw "Input file '$ImportFile': No 'Path' found in one of the 'Suppliers'."
+                throw "Input file '$ImportFile': Property 'Path' is missing in 'Suppliers'."
             }
             if (-not (Test-Path -LiteralPath $s.Path -PathType Container)) {
                 throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found"
