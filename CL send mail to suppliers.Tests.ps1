@@ -280,20 +280,14 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                 $actualRow = $actual | Where-Object {
                     $_.ShipmentNumber -eq $testRow.ShipmentNumber
                 }
-                $actualRow.Plant | Should -Be $testRow.Plant
-                $actualRow.DeliveryNumber | Should -Be $testRow.DeliveryNumber
-                $actualRow.ShipToNumber | Should -Be $testRow.ShipToNumber
-                $actualRow.ShipToName | Should -Be $testRow.ShipToName
-                $actualRow.Address | Should -Be $testRow.Address
-                $actualRow.City | Should -Be $testRow.City
-                $actualRow.MaterialNumber | Should -Be $testRow.MaterialNumber
-                $actualRow.MaterialDescription | Should -Be $testRow.MaterialDescription
-                $actualRow.Tonnage | Should -Be $testRow.Tonnage
-                $actualRow.LoadingDate | Should -Be $testRow.LoadingDate
-                $actualRow.DeliveryDate | Should -Be $testRow.DeliveryDate
-                $actualRow.TruckID | Should -Be $testRow.TruckID
-                $actualRow.PickingStatus | Should -Be $testRow.PickingStatus
-                $actualRow.SiloBulkID | Should -Be $testRow.SiloBulkID
+                @(
+                    'Plant', 'DeliveryNumber', 'ShipToNumber', 'ShipToName',
+                    'Address', 'City', 'MaterialNumber', 'MaterialDescription',
+                    'Tonnage', 'LoadingDate', 'TruckID', 'PickingStatus', 
+                    'SiloBulkID'
+                ) | ForEach-Object {
+                    $actualRow.$_ | Should -Be $testRow.$_
+                }
             }
         }
     }
