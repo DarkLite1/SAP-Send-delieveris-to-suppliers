@@ -46,6 +46,8 @@ Begin {
         Write-EventLog @EventStartParams
         Get-ScriptRuntimeHC -Start
 
+        $Now = Get-Date
+
         #region Logging
         try {
             $LogParams = @{
@@ -112,64 +114,74 @@ Begin {
 
 Process {
     try {
-        $ascFiles = Get-ChildItem $Path -Filter '*.ASC' -File
+        foreach ($s in $Suppliers) {
+            $mailParams = @{
+                MailTo = $s.MailTo
+            }
 
-        $convertedAscFiles = foreach ($file in $ascFiles) {
-            $fileContent = Get-Content -LiteralPath $file.FullName
+            $getParams = @{
+                LiteralPath = $s.Path
+                Filter      = '*.ASC' 
+                File        = $true
+            }
+            $ascFiles = Get-ChildItem @getParams |
+            Where-Object { $_.CreationTime.Date -eq $Now.Date }
 
-            $data = foreach ($line in $fileContent) {
-                [PSCustomObject]@{
-                    Plant               = $line.SubString(0, 4).Trim()
-                    ShipmentNumber      = [int]$line.SubString(4, 10).Trim()
-                    DeliveryNumber      = [int]$line.SubString(14, 30).Trim()
-                    ShipToNumber        = [int]$line.SubString(44, 10).Trim()
-                    ShipToName          = $line.SubString(54, 35).Trim()
-                    Address             = $line.SubString(89, 35).Trim()
-                    City                = $line.SubString(124, 35).Trim()
-                    MaterialNumber      = [int]$line.SubString(159, 18).Trim()
-                    MaterialDescription = $line.SubString(177, 40).Trim()
-                    Tonnage             = $line.SubString(217, 6).Trim()
-                    LoadingDate         = $(
-                        if ($loadingDate = $line.SubString(223, 8).Trim()) {
-                            [DateTime]::ParseExact($loadingDate, 'yyyyMMdd', $null)
-                        }
-                    )
-                    DeliveryDate        = $(
-                        $deliveryDate = $line.SubString(231, 8).Trim()
-                        $deliveryTime = $line.SubString(239, 6).Trim()
-                        if ($deliveryDate -and $deliveryTime) {
-                            [DateTime]::ParseExact(
+            foreach ($file in $ascFiles) {
+                $fileContent = Get-Content -LiteralPath $file.FullName
+                
+                #region Convert to Excel
+                $exportToExcel = foreach ($line in $fileContent) {
+                    [PSCustomObject]@{
+                        Plant               = $line.SubString(0, 4).Trim()
+                        ShipmentNumber      = [int]$line.SubString(4, 10).Trim()
+                        DeliveryNumber      = [int]$line.SubString(14, 30).Trim()
+                        ShipToNumber        = [int]$line.SubString(44, 10).Trim()
+                        ShipToName          = $line.SubString(54, 35).Trim()
+                        Address             = $line.SubString(89, 35).Trim()
+                        City                = $line.SubString(124, 35).Trim()
+                        MaterialNumber      = [int]$line.SubString(159, 18).Trim()
+                        MaterialDescription = $line.SubString(177, 40).Trim()
+                        Tonnage             = $line.SubString(217, 6).Trim()
+                        LoadingDate         = $(
+                            if ($loadingDate = $line.SubString(223, 8).Trim()) {
+                                [DateTime]::ParseExact($loadingDate, 'yyyyMMdd', $null)
+                            }
+                        )
+                        DeliveryDate        = $(
+                            $deliveryDate = $line.SubString(231, 8).Trim()
+                            $deliveryTime = $line.SubString(239, 6).Trim()
+                            if ($deliveryDate -and $deliveryTime) {
+                                [DateTime]::ParseExact(
                     ($deliveryDate + $deliveryTime), 'yyyyMMddHHmmss', $null
-                            )
-                        }
-                        elseif ($deliveryDate) {
-                            [DateTime]::ParseExact($deliveryDate, 'yyyyMMdd', $null)
-                        }
-                    )
-                    TruckID             = $line.SubString(245, 20).Trim()
-                    PickingStatus       = $line.SubString(265, 1).Trim()
-                    SiloBulkID          = $line.SubString(266, ($line.Length - 266)).Trim()
+                                )
+                            }
+                            elseif ($deliveryDate) {
+                                [DateTime]::ParseExact($deliveryDate, 'yyyyMMdd', $null)
+                            }
+                        )
+                        TruckID             = $line.SubString(245, 20).Trim()
+                        PickingStatus       = $line.SubString(265, 1).Trim()
+                        SiloBulkID          = $line.SubString(266, ($line.Length - 266)).Trim()
+                    }
                 }
-            }
+                #endregion
 
-            [PSCustomObject]@{
-                Name    = $file.BaseName
-                Content = $data
-            }
-        }
+                #region Export to Excel
+                if ($exportToExcel) {
+                    $excelParams = @{
+                        Path          = Join-Path $logFolder ($file.BaseName + '.xlsx')
+                        WorksheetName = 'Data'
+                        TableName     = 'Data'
+                        FreezeTopRow  = $true
+                        AutoSize      = $true
+                    }
+                    $exportToExcel | Export-Excel @excelParams
 
-        foreach (
-            $convertedFile in 
-            $convertedAscFiles | Where-Object { $_.Content }
-        ) {
-            $excelParams = @{
-                Path          = Join-Path $logFolder ($convertedFile.Name + '.xlsx')
-                WorksheetName = 'Data'
-                TableName     = 'Data'
-                FreezeTopRow  = $true
-                AutoSize      = $true
+                    $mailParams.Attachments = $excelParams.Path
+                }
+                #endregion
             }
-            $convertedFile.Content | Export-Excel @excelParams
         }
     }
     catch {

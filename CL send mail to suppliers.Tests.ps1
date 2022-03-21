@@ -200,3 +200,101 @@ Describe 'send an e-mail to the admin when' {
         }
     }
 }
+Describe 'when all tests pass' {
+    BeforeAll {
+        $testAscFile = @"
+BE1021058802552104737363                    0022016630Faber W Krommenie                  Rosariumlaan 47                    KROMMENI                           000000000000103464CEM I 42,5 N BULK                       29.700202203142022031507150092BJT9              CNLSS128
+NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH              Tesselschadestraat 30              's-Hertogenbosch                   000000000000103415CEM III/B 42,5 N LH NCR BULK            37.7802022031520220315060000DUMSIMONS01         C
+"@
+
+        $testExportedExcelRows = @(
+            @{
+                Plant               = 'BE10'
+                ShipmentNumber      = 2105880255
+                DeliveryNumber      = 2104737363
+                ShipToNumber        = 22016630
+                ShipToName          = 'Faber W Krommenie'
+                Address             = 'Rosariumlaan 47'
+                City                = 'KROMMENI'
+                MaterialNumber      = 103464
+                MaterialDescription = 'CEM I 42,5 N BULK'
+                Tonnage             = 29.700
+                LoadingDate         = Get-Date('3/14/2022')
+                DeliveryDate        = Get-Date('3/15/2022 7:15:00 AM')
+                TruckID             = '92BJT9'
+                PickingStatus       = 'C'
+                SiloBulkID          = 'NLSS128'
+            }
+            @{
+                Plant               = 'NL11'
+                ShipmentNumber      = 2105880519
+                DeliveryNumber      = 2104737268
+                ShipToNumber        = 21700679
+                ShipToName          = 'MEBIN Tessel DENBOSCH'
+                Address             = 'Tesselschadestraat 30'
+                City                = "'s-Hertogenbosch"
+                MaterialNumber      = 103415
+                MaterialDescription = 'CEM III/B 42,5 N LH NCR BULK'
+                Tonnage             = 37.780
+                LoadingDate         = Get-Date('3/15/2022')
+                DeliveryDate        = Get-Date('3/15/2022 6:00:00 AM')
+                TruckID             = 'DUMSIMONS01'
+                PickingStatus       = 'C'
+                SiloBulkID          = ''
+            }
+        )
+
+        $testAscFileOutParams = @{
+            FilePath = (New-Item "TestDrive:/Test.asc" -ItemType File).FullName
+            Encoding = 'utf8'
+        }
+        $testAscFile | Out-File @testAscFileOutParams
+
+        @{
+            MailTo    = 'bob@contoso.com'
+            Suppliers = @(
+                @{
+                    Name   = 'Picard'
+                    Path   = 'TestDrive:/'
+                    MailTo = 'bob@contoso.com'
+                }
+            )
+        } | ConvertTo-Json | Out-File @testOutParams
+        
+        .$testScript @testParams
+    }
+    Context 'export an Excel file' {
+        BeforeAll {
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '*.xlsx'
+
+            $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Data'
+        }
+        It 'to the log folder' {
+            $testExcelLogFile | Should -Not -BeNullOrEmpty
+        }
+        It 'with the correct total rows' {
+            $actual | Should -HaveCount $testExportedExcelRows.Count
+        }
+        It 'with the correct data in the rows' {
+            foreach ($testRow in $testExportedExcelRows) {
+                $actualRow = $actual | Where-Object {
+                    $_.ShipmentNumber -eq $testRow.ShipmentNumber
+                }
+                $actualRow.Plant | Should -Be $testRow.Plant
+                $actualRow.DeliveryNumber | Should -Be $testRow.DeliveryNumber
+                $actualRow.ShipToNumber | Should -Be $testRow.ShipToNumber
+                $actualRow.ShipToName | Should -Be $testRow.ShipToName
+                $actualRow.Address | Should -Be $testRow.Address
+                $actualRow.City | Should -Be $testRow.City
+                $actualRow.MaterialNumber | Should -Be $testRow.MaterialNumber
+                $actualRow.MaterialDescription | Should -Be $testRow.MaterialDescription
+                $actualRow.Tonnage | Should -Be $testRow.Tonnage
+                $actualRow.LoadingDate | Should -Be $testRow.LoadingDate
+                $actualRow.DeliveryDate | Should -Be $testRow.DeliveryDate
+                $actualRow.TruckID | Should -Be $testRow.TruckID
+                $actualRow.PickingStatus | Should -Be $testRow.PickingStatus
+                $actualRow.SiloBulkID | Should -Be $testRow.SiloBulkID
+            }
+        }
+    }
+} -Tag test
