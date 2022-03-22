@@ -306,7 +306,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                     Name          = 'Picard'
                     Path          = 'TestDrive:/'
                     MailTo        = 'bob@contoso.com'
-                    NewerThanDays = 0
+                    NewerThanDays = 5
                 }
             )
         } | ConvertTo-Json | Out-File @testOutParams

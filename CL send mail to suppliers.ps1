@@ -46,8 +46,6 @@ Begin {
         Write-EventLog @EventStartParams
         Get-ScriptRuntimeHC -Start
 
-        $Now = Get-Date
-
         #region Logging
         try {
             $LogParams = @{
@@ -124,6 +122,8 @@ Begin {
 Process {
     try {
         foreach ($s in $Suppliers) {
+            $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
+
             $mailParams = @{
                 MailTo = $s.MailTo
             }
@@ -134,7 +134,7 @@ Process {
                 File        = $true
             }
             $ascFiles = Get-ChildItem @getParams |
-            Where-Object { $_.CreationTime.Date -eq $Now.Date }
+            Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
 
             foreach ($file in $ascFiles) {
                 $fileContent = Get-Content -LiteralPath $file.FullName
