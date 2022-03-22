@@ -315,7 +315,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
     }
     Context 'export an Excel file' {
         BeforeAll {
-            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '*.xlsx'
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '*Picard.xlsx'
 
             $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Data'
         }

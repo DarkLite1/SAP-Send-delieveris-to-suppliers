@@ -179,7 +179,7 @@ Process {
                 #region Export to Excel
                 if ($exportToExcel) {
                     $excelParams = @{
-                        Path          = Join-Path $logFolder ($file.BaseName + '.xlsx')
+                        Path          = Join-Path $logFolder ($s.Name + '.xlsx')
                         WorksheetName = 'Data'
                         TableName     = 'Data'
                         FreezeTopRow  = $true
