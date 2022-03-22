@@ -22,6 +22,7 @@ Param (
     [String]$ScriptName,
     [Parameter(Mandatory)]
     [String]$ImportFile,
+    [String]$Mailbox = 'BNL.ServiceDesk@heidelbergcement.com',
     [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\Application specific\CL\$ScriptName",
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
@@ -69,8 +70,8 @@ Begin {
         #endregion
         
         #region Test .json file properties
-        if (-not ($MailTo = $file.MailTo)) {
-            throw "Input file '$ImportFile': No 'MailTo' addresses found."
+        if (-not ($MailFrom = $file.MailFrom)) {
+            throw "Input file '$ImportFile': No 'MailFrom' addresses found."
         }
         if (-not ($Suppliers = $file.Suppliers)) {
             throw "Input file '$ImportFile': No 'Suppliers' found."
@@ -121,12 +122,26 @@ Begin {
 
 Process {
     try {
+        $mailParams = @{
+            Service        = New-EwsServiceHC
+            From           = $MailFrom
+            SentItemsPath  = ('\PowerShell\' + $ScriptName + ' SENT')
+            EventLogSource = $ScriptName
+            ErrorAction    = 'Stop'
+            Body           = 'test'
+        }
+        
+        #region Create mailbox folders
+        $mailFolderParams = @{
+            Mailbox = $mailParams.From
+            Path    = $mailParams.SentItemsPath
+            Service = $mailParams.Service
+        }
+        New-MailboxFolderHC @mailFolderParams
+        #endregion
+
         foreach ($s in $Suppliers) {
             $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
-
-            $mailParams = @{
-                MailTo = $s.MailTo
-            }
 
             $getParams = @{
                 LiteralPath = $s.Path
@@ -135,6 +150,8 @@ Process {
             }
             $ascFiles = Get-ChildItem @getParams |
             Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
+
+            $mailParams.Attachments = @()
 
             $exportToExcel = foreach ($file in $ascFiles) {
                 $fileContent = Get-Content -LiteralPath $file.FullName
@@ -176,10 +193,12 @@ Process {
                     }
                 }
                 #endregion
+
+                $mailParams.Attachments += $file.FullName
             }
 
-            #region Export to Excel
             if ($exportToExcel) {
+                #region Export to Excel
                 $excelParams = @{
                     Path          = Join-Path $logFolder ($s.Name + '.xlsx')
                     WorksheetName = 'Data'
@@ -189,9 +208,20 @@ Process {
                 }
                 $exportToExcel | Export-Excel @excelParams
 
-                $mailParams.Attachments = $excelParams.Path
+                $mailParams.Attachments += $excelParams.Path
+                #endregion
+
+                #region Send mail to end user
+                $mailParams.To = $s.MailTo
+                $mailParams.Body = 'Please find in attachment an overview of all deliveries from date {0}' -f $compareDate.ToString('dd/MM/yyyy')
+                $mailParams.Subject = '{0}, {1} deliveries, {2}' -f  
+                $s.Name, $exportToExcel.Count, 
+                $compareDate.ToString('dd/MM/yyyy')
+                
+                
+                # Send-MailAuthenticatedHC @mailParams @mailSupplierParams
+                #endregion
             }
-            #endregion
         }
     }
     catch {

@@ -14,8 +14,13 @@ BeforeAll {
         LogFolder  = New-Item 'TestDrive:/log' -ItemType Directory
     }
     
+    Mock New-MailboxFolderHC
+    Mock Send-MailAuthenticatedHC
     Mock Send-MailHC
     Mock Write-EventLog
+    Mock New-EwsServiceHC {
+        New-Object Microsoft.Exchange.WebServices.Data.ExchangeService
+    }
 }
 Describe 'the mandatory parameters are' {
     It '<_>' -ForEach @('ImportFile', 'ScriptName') {
@@ -56,13 +61,13 @@ Describe 'send an e-mail to the admin when' {
             }
         }
         Context 'property' {
-            It 'MailTo is missing' {
+            It 'MailFrom is missing' {
                 @{
                     Suppliers = @(
                         @{
-                            Name   = 'Picard'
-                            Path   = 'TestDrive:/'
-                            MailTo = 'bob@contoso.com'
+                            Name     = 'Picard'
+                            Path     = 'TestDrive:/'
+                            MailFrom = 'bob@contoso.com'
                         }
                     )
                 } | ConvertTo-Json | Out-File @testOutParams
@@ -70,7 +75,7 @@ Describe 'send an e-mail to the admin when' {
                 .$testScript @testParams
                 
                 Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
-                    (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'MailTo' addresses found*")
+                    (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'MailFrom' addresses found*")
                 }
                 Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                     $EntryType -eq 'Error'
@@ -78,7 +83,7 @@ Describe 'send an e-mail to the admin when' {
             }
             It 'Suppliers is missing' {
                 @{
-                    MailTo = @('bob@contoso.com')
+                    MailFrom = @('bob@contoso.com')
                 } | ConvertTo-Json | Out-File @testOutParams
                 
                 .$testScript @testParams
@@ -93,7 +98,7 @@ Describe 'send an e-mail to the admin when' {
             Context 'Property Suppliers' {
                 It 'Path is missing' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name          = 'Picard'
@@ -115,7 +120,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'Path does not exist' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name          = 'Picard'
@@ -137,7 +142,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'Name is missing' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 # Name   = 'Picard'
@@ -159,7 +164,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'MailTo is missing' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name          = 'Picard'
@@ -181,7 +186,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'MailTo is not an email address' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name          = 'Picard'
@@ -203,7 +208,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'NewerThanDays is missing' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name   = 'Picard'
@@ -225,7 +230,7 @@ Describe 'send an e-mail to the admin when' {
                 }
                 It 'NewerThanDays is not a number' {
                     @{
-                        MailTo    = @('bob@contoso.com')
+                        MailFrom  = @('bob@contoso.com')
                         Suppliers = @(
                             @{
                                 Name          = 'Picard'
@@ -302,7 +307,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
         $testAscFile | Out-File @testAscFileOutParams
 
         @{
-            MailTo    = 'bob@contoso.com'
+            MailFrom  = 'bob@contoso.com'
             Suppliers = @(
                 @{
                     Name          = 'Picard'
@@ -312,6 +317,12 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                 }
             )
         } | ConvertTo-Json | Out-File @testOutParams
+
+        $testMail = @{
+            Priority = 'High'
+            Subject  = '1 removed, 1 error'
+            Message  = "*Please find in attachment an overview of all deliveries from date*"
+        }
         
         .$testScript @testParams
     }
@@ -341,6 +352,16 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                     $actualRow.$_ | Should -Be $testRow.$_
                 }
             }
+        }
+    }
+    It 'send a summary mail to the user' {
+        Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
+            ($To -eq 'bob@contoso.com') -and
+            ($Bcc -eq $ScriptAdmin) -and
+            ($Priority -eq $testMail.Priority) -and
+            ($Subject -eq $testMail.Subject) -and
+            ($Attachments -like '*log.xlsx') -and
+            ($Message -like $testMail.Message)
         }
     }
 } -Tag test
