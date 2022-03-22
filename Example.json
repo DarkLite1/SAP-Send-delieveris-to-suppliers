@@ -1,16 +1,18 @@
 {
-  "MailTo": ["picard@starfleet.com"],
+  "MailFrom": ["command@starfleet.com"],
   "Suppliers": [
     {
       "Name": "Starfleet",
       "Path": "\\\\star base\\OUT",
       "MailTo": ["picard@starfleet.com"],
+      "MailBcc": [],
       "NewerThanDays": 0
     },
     {
       "Name": "Klingons",
       "Path": "\\\\kronos\\OUT",
       "MailTo": ["worf@kronos.com"],
+      "MailBcc": [],
       "NewerThanDays": 0
     }
   ]
