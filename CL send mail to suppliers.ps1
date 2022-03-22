@@ -152,6 +152,10 @@ Process {
             Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
 
             $mailParams.Attachments = @()
+            $mailParams.Bcc = @($ScriptAdmin)
+            if ($s.MailBcc) {
+                $mailParams.Bcc += $s.MailBcc
+            }
 
             $exportToExcel = foreach ($file in $ascFiles) {
                 $fileContent = Get-Content -LiteralPath $file.FullName
@@ -214,12 +218,11 @@ Process {
                 #region Send mail to end user
                 $mailParams.To = $s.MailTo
                 $mailParams.Body = 'Please find in attachment an overview of all deliveries from date {0}' -f $compareDate.ToString('dd/MM/yyyy')
-                $mailParams.Subject = '{0}, {1} deliveries, {2}' -f  
-                $s.Name, $exportToExcel.Count, 
-                $compareDate.ToString('dd/MM/yyyy')
+                $mailParams.Subject = '{0}, {1} deliveries' -f  
+                $s.Name, $exportToExcel.Count
                 
                 
-                # Send-MailAuthenticatedHC @mailParams @mailSupplierParams
+                Send-MailAuthenticatedHC @mailParams
                 #endregion
             }
         }

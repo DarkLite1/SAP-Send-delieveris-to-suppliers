@@ -15,7 +15,7 @@ BeforeAll {
     }
     
     Mock New-MailboxFolderHC
-    Mock Send-MailAuthenticatedHC
+    Mock Send-MailAuthenticatedHC -RemoveParameterValidation 'From'
     Mock Send-MailHC
     Mock Write-EventLog
     Mock New-EwsServiceHC {
@@ -307,7 +307,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
         $testAscFile | Out-File @testAscFileOutParams
 
         @{
-            MailFrom  = 'bob@contoso.com'
+            MailFrom  = 'boss@contoso.com'
             Suppliers = @(
                 @{
                     Name          = 'Picard'
@@ -319,9 +319,12 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
         } | ConvertTo-Json | Out-File @testOutParams
 
         $testMail = @{
-            Priority = 'High'
-            Subject  = '1 removed, 1 error'
-            Message  = "*Please find in attachment an overview of all deliveries from date*"
+            From           = 'boss@contoso.com'
+            To             = 'bob@contoso.com'
+            SentItemsPath  = '\PowerShell\Test (Brecht) SENT'
+            EventLogSource = 'Test (Brecht)'
+            Subject        = 'Picard, 2 deliveries'
+            Body           = "*Please find in attachment an overview of all deliveries from date $((Get-Date).addDays(-5).ToString('dd/MM/yyyy'))"
         }
         
         .$testScript @testParams
@@ -355,13 +358,15 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
         }
     }
     It 'send a summary mail to the user' {
-        Should -Invoke Send-MailHC -Exactly 1 -Scope Describe -ParameterFilter {
-            ($To -eq 'bob@contoso.com') -and
+        Should -Invoke Send-MailAuthenticatedHC -Exactly 1 -Scope Describe -ParameterFilter {
+            ($To -eq $testMail.To) -and
             ($Bcc -eq $ScriptAdmin) -and
-            ($Priority -eq $testMail.Priority) -and
+            ($SentItemsPath -eq $testMail.SentItemsPath) -and
+            ($EventLogSource -eq $testMail.EventLogSource) -and
             ($Subject -eq $testMail.Subject) -and
-            ($Attachments -like '*log.xlsx') -and
-            ($Message -like $testMail.Message)
+            ($Attachments -like '*Picard.xlsx') -and
+            ($Attachments -contains $testAscFileOutParams.FilePath) -and
+            ($Body -like $testMail.Body)
         }
     }
 } -Tag test
