@@ -4,12 +4,14 @@
     {
       "Name": "Starfleet",
       "Path": "\\\\star base\\OUT",
-      "MailTo": ["picard@starfleet.com"]
+      "MailTo": ["picard@starfleet.com"],
+      "NewerThanDays": 0
     },
     {
       "Name": "Klingons",
       "Path": "\\\\kronos\\OUT",
-      "MailTo": ["worf@kronos.com"]
+      "MailTo": ["worf@kronos.com"],
+      "NewerThanDays": 0
     }
   ]
 }
