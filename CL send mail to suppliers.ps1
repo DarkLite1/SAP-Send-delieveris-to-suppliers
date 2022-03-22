@@ -101,6 +101,15 @@ Begin {
                 throw "Input file '$ImportFile': 'MailTo' value '$($s.MailTo)' is not a valid e-mail address for supplier '$($s.Name)'."
             }
             #endregion
+
+            #region NewerThanDays
+            if ($s.PSObject.Properties.Name -notContains 'NewerThanDays') {
+                throw "Input file '$ImportFile': Property 'NewerThanDays' is missing for supplier '$($s.Name)'. Use number '0' to only handles files with creation date today."
+            }
+            if (-not ($s.NewerThanDays -is [int])) {
+                throw "Input file '$ImportFile': 'NewerThanDays' needs to be a number, the value '$($s.NewerThanDays)' is not supported. Use number '0' to only handle files with creation date today."
+            }
+            #endregion
         }
         #endregion
     }

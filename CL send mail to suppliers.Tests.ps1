@@ -96,9 +96,10 @@ Describe 'send an e-mail to the admin when' {
                         MailTo    = @('bob@contoso.com')
                         Suppliers = @(
                             @{
-                                Name   = 'Picard'
+                                Name          = 'Picard'
                                 # Path   = 'TestDrive:/'
-                                MailTo = 'bob@contoso.com'
+                                MailTo        = 'bob@contoso.com'
+                                NewerThanDays = 0
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
@@ -117,9 +118,10 @@ Describe 'send an e-mail to the admin when' {
                         MailTo    = @('bob@contoso.com')
                         Suppliers = @(
                             @{
-                                Name   = 'Picard'
-                                Path   = 'C:/notExisting'
-                                MailTo = 'bob@contoso.com'
+                                Name          = 'Picard'
+                                Path          = 'C:/notExisting'
+                                MailTo        = 'bob@contoso.com'
+                                NewerThanDays = 0
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
@@ -139,8 +141,9 @@ Describe 'send an e-mail to the admin when' {
                         Suppliers = @(
                             @{
                                 # Name   = 'Picard'
-                                Path   = 'TestDrive:/'
-                                MailTo = 'bob@contoso.com'
+                                Path          = 'TestDrive:/'
+                                MailTo        = 'bob@contoso.com'
+                                NewerThanDays = 0
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
@@ -159,9 +162,10 @@ Describe 'send an e-mail to the admin when' {
                         MailTo    = @('bob@contoso.com')
                         Suppliers = @(
                             @{
-                                Name = 'Picard'
-                                Path = 'TestDrive:/'
+                                Name          = 'Picard'
+                                Path          = 'TestDrive:/'
                                 # MailTo = 'bob@contoso.com'
+                                NewerThanDays = 0
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
@@ -180,9 +184,10 @@ Describe 'send an e-mail to the admin when' {
                         MailTo    = @('bob@contoso.com')
                         Suppliers = @(
                             @{
-                                Name   = 'Picard'
-                                Path   = 'TestDrive:/'
-                                MailTo = 'invalid'
+                                Name          = 'Picard'
+                                Path          = 'TestDrive:/'
+                                MailTo        = 'invalid'
+                                NewerThanDays = 0
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
@@ -191,6 +196,50 @@ Describe 'send an e-mail to the admin when' {
                     
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*'MailTo' value 'invalid' is not a valid e-mail address for supplier 'Picard'*")
+                    }
+                    Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                        $EntryType -eq 'Error'
+                    }
+                }
+                It 'NewerThanDays is missing' {
+                    @{
+                        MailTo    = @('bob@contoso.com')
+                        Suppliers = @(
+                            @{
+                                Name   = 'Picard'
+                                Path   = 'TestDrive:/'
+                                MailTo = 'bob@contoso.com'
+                                # NewerThanDays = 0
+                            }
+                        )
+                    } | ConvertTo-Json | Out-File @testOutParams
+                    
+                    .$testScript @testParams
+                    
+                    Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                        (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'NewerThanDays' is missing*")
+                    }
+                    Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
+                        $EntryType -eq 'Error'
+                    }
+                }
+                It 'NewerThanDays is not a number' {
+                    @{
+                        MailTo    = @('bob@contoso.com')
+                        Suppliers = @(
+                            @{
+                                Name          = 'Picard'
+                                Path          = 'TestDrive:/'
+                                MailTo        = 'bob@contoso.com'
+                                NewerThanDays = 'a'
+                            }
+                        )
+                    } | ConvertTo-Json | Out-File @testOutParams
+                    
+                    .$testScript @testParams
+                    
+                    Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
+                        (&$MailAdminParams) -and ($Message -like "*$ImportFile*'NewerThanDays' needs to be a number, the value 'a' is not supported. Use number '0' to only handle files with creation date today.*")
                     }
                     Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                         $EntryType -eq 'Error'
@@ -254,9 +303,10 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             MailTo    = 'bob@contoso.com'
             Suppliers = @(
                 @{
-                    Name   = 'Picard'
-                    Path   = 'TestDrive:/'
-                    MailTo = 'bob@contoso.com'
+                    Name          = 'Picard'
+                    Path          = 'TestDrive:/'
+                    MailTo        = 'bob@contoso.com'
+                    NewerThanDays = 0
                 }
             )
         } | ConvertTo-Json | Out-File @testOutParams
