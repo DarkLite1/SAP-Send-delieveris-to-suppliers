@@ -273,6 +273,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                 TruckID             = '92BJT9'
                 PickingStatus       = 'C'
                 SiloBulkID          = 'NLSS128'
+                File                = 'Test1'
             }
             @{
                 Plant               = 'NL11'
@@ -290,11 +291,12 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                 TruckID             = 'DUMSIMONS01'
                 PickingStatus       = 'C'
                 SiloBulkID          = ''
+                File                = 'Test1'
             }
         )
 
         $testAscFileOutParams = @{
-            FilePath = (New-Item "TestDrive:/Test.asc" -ItemType File).FullName
+            FilePath = (New-Item "TestDrive:/Test1.asc" -ItemType File).FullName
             Encoding = 'utf8'
         }
         $testAscFile | Out-File @testAscFileOutParams
@@ -334,7 +336,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                     'Plant', 'DeliveryNumber', 'ShipToNumber', 'ShipToName',
                     'Address', 'City', 'MaterialNumber', 'MaterialDescription',
                     'Tonnage', 'LoadingDate', 'TruckID', 'PickingStatus', 
-                    'SiloBulkID'
+                    'SiloBulkID', 'File'
                 ) | ForEach-Object {
                     $actualRow.$_ | Should -Be $testRow.$_
                 }

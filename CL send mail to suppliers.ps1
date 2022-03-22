@@ -136,11 +136,11 @@ Process {
             $ascFiles = Get-ChildItem @getParams |
             Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
 
-            foreach ($file in $ascFiles) {
+            $exportToExcel = foreach ($file in $ascFiles) {
                 $fileContent = Get-Content -LiteralPath $file.FullName
                 
                 #region Convert to Excel
-                $exportToExcel = foreach ($line in $fileContent) {
+                foreach ($line in $fileContent) {
                     [PSCustomObject]@{
                         Plant               = $line.SubString(0, 4).Trim()
                         ShipmentNumber      = [int]$line.SubString(4, 10).Trim()
@@ -172,25 +172,26 @@ Process {
                         TruckID             = $line.SubString(245, 20).Trim()
                         PickingStatus       = $line.SubString(265, 1).Trim()
                         SiloBulkID          = $line.SubString(266, ($line.Length - 266)).Trim()
+                        File                = $file.BaseName
                     }
-                }
-                #endregion
-
-                #region Export to Excel
-                if ($exportToExcel) {
-                    $excelParams = @{
-                        Path          = Join-Path $logFolder ($s.Name + '.xlsx')
-                        WorksheetName = 'Data'
-                        TableName     = 'Data'
-                        FreezeTopRow  = $true
-                        AutoSize      = $true
-                    }
-                    $exportToExcel | Export-Excel @excelParams
-
-                    $mailParams.Attachments = $excelParams.Path
                 }
                 #endregion
             }
+
+            #region Export to Excel
+            if ($exportToExcel) {
+                $excelParams = @{
+                    Path          = Join-Path $logFolder ($s.Name + '.xlsx')
+                    WorksheetName = 'Data'
+                    TableName     = 'Data'
+                    FreezeTopRow  = $true
+                    AutoSize      = $true
+                }
+                $exportToExcel | Export-Excel @excelParams
+
+                $mailParams.Attachments = $excelParams.Path
+            }
+            #endregion
         }
     }
     catch {
