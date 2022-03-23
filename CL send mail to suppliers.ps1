@@ -219,10 +219,10 @@ Process {
                 $mailParams.To = $s.MailTo
                 $mailParams.Body = '<p>Dear</p><p>Since <b>{0}</b> there {1}.</p><p><i>Check the attachments for details.</i></p>' -f $compareDate.ToString('dd/MM/yyyy'), $(
                     if ($exportToExcel.Count -eq 1) { 
-                        'has been 1 delivery' 
+                        'has been <b>1 delivery</b>' 
                     }
                     else { 
-                        "have been $($exportToExcel.Count) deliveries"
+                        "have been <b>$($exportToExcel.Count) deliveries</b>"
                     }
                 )
                 $mailParams.Subject = '{0}, {1} {2}' -f  

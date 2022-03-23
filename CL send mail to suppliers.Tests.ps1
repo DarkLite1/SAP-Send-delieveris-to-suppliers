@@ -324,7 +324,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             SentItemsPath  = '\PowerShell\Test (Brecht) SENT'
             EventLogSource = 'Test (Brecht)'
             Subject        = 'Picard, 2 deliveries'
-            Body           = "<p>Dear</p><p>Since <b>{0}</b> there have been 2 deliveries.</p><p><i>Check the attachments for details.</i></p>*" -f (Get-Date).addDays(-5).ToString('dd/MM/yyyy')
+            Body           = "<p>Dear</p><p>Since <b>{0}</b> there have been <b>2 deliveries</b>.</p><p><i>Check the attachments for details.</i></p>*" -f (Get-Date).addDays(-5).ToString('dd/MM/yyyy')
         }
         
         .$testScript @testParams
