@@ -313,14 +313,16 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                     Name          = 'Picard'
                     Path          = 'TestDrive:/'
                     MailTo        = 'bob@contoso.com'
+                    MailBcc       = @('jack@contoso.com', 'mike@contoso.com')
                     NewerThanDays = 5
                 }
             )
-        } | ConvertTo-Json | Out-File @testOutParams
+        } | ConvertTo-Json -Depth 5 | Out-File @testOutParams
 
         $testMail = @{
             From           = 'boss@contoso.com'
             To             = 'bob@contoso.com'
+            Bcc            = @('jack@contoso.com', 'mike@contoso.com')
             SentItemsPath  = '\PowerShell\Test (Brecht) SENT'
             EventLogSource = 'Test (Brecht)'
             Subject        = 'Picard, 2 deliveries'
@@ -359,8 +361,11 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
     }
     It 'send a summary mail to the user' {
         Should -Invoke Send-MailAuthenticatedHC -Exactly 1 -Scope Describe -ParameterFilter {
+            ($From -eq $testMail.From) -and
             ($To -eq $testMail.To) -and
-            ($Bcc -eq $ScriptAdmin) -and
+            ($Bcc -contains $ScriptAdmin) -and
+            ($Bcc -contains $testMail.Bcc[0]) -and
+            ($Bcc -contains $testMail.Bcc[1]) -and
             ($SentItemsPath -eq $testMail.SentItemsPath) -and
             ($EventLogSource -eq $testMail.EventLogSource) -and
             ($Subject -eq $testMail.Subject) -and

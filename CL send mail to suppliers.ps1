@@ -152,10 +152,6 @@ Process {
             Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
 
             $mailParams.Attachments = @()
-            $mailParams.Bcc = @($ScriptAdmin)
-            if ($s.MailBcc) {
-                $mailParams.Bcc += $s.MailBcc
-            }
 
             $exportToExcel = foreach ($file in $ascFiles) {
                 $fileContent = Get-Content -LiteralPath $file.FullName
@@ -217,6 +213,10 @@ Process {
 
                 #region Send mail to end user
                 $mailParams.To = $s.MailTo
+                $mailParams.Bcc = @($ScriptAdmin)
+                if ($s.MailBcc) { 
+                    $mailParams.Bcc += $s.MailBcc 
+                }
                 $mailParams.Body = '<p>Dear</p><p>Since <b>{0}</b> there {1}.</p><p><i>Check the attachments for details.</i></p>' -f $compareDate.ToString('dd/MM/yyyy'), $(
                     if ($exportToExcel.Count -eq 1) { 
                         'has been <b>1 delivery</b>' 
@@ -230,7 +230,6 @@ Process {
                     if ($exportToExcel.Count -eq 1) { 'delivery' }
                     else { 'deliveries' }
                 )
-                
                 
                 Send-MailAuthenticatedHC @mailParams
                 #endregion
