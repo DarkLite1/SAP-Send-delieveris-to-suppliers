@@ -217,7 +217,14 @@ Process {
 
                 #region Send mail to end user
                 $mailParams.To = $s.MailTo
-                $mailParams.Body = 'Please find in attachment an overview of all deliveries from date {0}' -f $compareDate.ToString('dd/MM/yyyy')
+                $mailParams.Body = 'Since <b>{0}</b> there {1}.<p><i>Check the attachments for details.</i></p>' -f $compareDate.ToString('dd/MM/yyyy'), $(
+                    if ($exportToExcel.Count -eq 1) { 
+                        'has been 1 delivery' 
+                    }
+                    else { 
+                        "have been $($exportToExcel.Count) deliveries"
+                    }
+                )
                 $mailParams.Subject = '{0}, {1} {2}' -f  
                 $s.Name, $exportToExcel.Count, $(
                     if ($exportToExcel.Count -eq 1) { 'delivery' }
