@@ -49,13 +49,11 @@ Begin {
 
         #region Logging
         try {
-            $LogParams = @{
+            $logParams = @{
                 LogFolder    = New-Item -Path $LogFolder -ItemType 'Directory' -Force -ErrorAction 'Stop'
-                Name         = $ScriptName
                 Date         = 'ScriptStartTime'
                 NoFormatting = $true
             }
-            $LogFile = New-LogFileNameHC @LogParams
         }
         Catch {
             throw "Failed creating the log folder '$LogFolder': $_"
@@ -211,16 +209,18 @@ Process {
                 #region Export to Excel
                 $M = "Export '$($exportToExcel.Count)' objects to Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+                
+                $logParams.Name = $s.Name
 
                 $excelParams = @{
-                    Path          = Join-Path $logFolder ($s.Name + '.xlsx')
+                    Path          = "$(New-LogFileNameHC @logParams).xlsx"
                     WorksheetName = 'Data'
                     TableName     = 'Data'
                     FreezeTopRow  = $true
                     AutoSize      = $true
                 }
                 $exportToExcel | Export-Excel @excelParams
-                
+
                 $M = "Exported '$($exportToExcel.Count)' rows to Excel file '$($excelParams.Path)'"
                 Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
