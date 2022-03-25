@@ -141,8 +141,10 @@ Process {
         foreach ($s in $Suppliers) {
             $mailParams.Attachments = @()
             
+            #region Create log file name
             $logParams.Name = $s.Name
             $logFileName = New-LogFileNameHC @logParams
+            #endregion
                 
             #region Get .ASC files
             $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
