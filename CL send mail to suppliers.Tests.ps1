@@ -359,6 +359,9 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             }
         }
     }
+    it 'create a sent items folder in the mailbox' {
+        Should -Invoke New-MailboxFolderHC -Exactly 1 -Scope Describe 
+    }
     It 'send a summary mail to the user' {
         Should -Invoke Send-MailAuthenticatedHC -Exactly 1 -Scope Describe -ParameterFilter {
             ($From -eq $testMail.From) -and
