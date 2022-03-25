@@ -22,7 +22,6 @@ Param (
     [String]$ScriptName,
     [Parameter(Mandatory)]
     [String]$ImportFile,
-    [String]$Mailbox = 'BNL.ServiceDesk@heidelbergcement.com',
     [String]$LogFolder = "$env:POWERSHELL_LOG_FOLDER\Application specific\SAP\$ScriptName",
     [String]$ScriptAdmin = $env:POWERSHELL_SCRIPT_ADMIN
 )
