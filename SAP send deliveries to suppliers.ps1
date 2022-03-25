@@ -14,6 +14,9 @@
 
     In case there is no .ASC file created on the day that the script runs, 
     nothing is done and no mail is sent out.
+
+.PARAMETER Suppliers.NewerThanDays
+    Only report about .ASC files that are newer than x days.
 #>
 
 [CmdLetBinding()]
