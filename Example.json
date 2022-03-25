@@ -1,5 +1,5 @@
 {
-  "MailFrom": ["command@starfleet.com"],
+  "MailFrom": "command@starfleet.com",
   "Suppliers": [
     {
       "Name": "Starfleet",
