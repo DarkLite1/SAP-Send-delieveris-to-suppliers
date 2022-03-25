@@ -162,16 +162,6 @@ Process {
             #endregion
 
             $exportToExcel = foreach ($file in $ascFiles) {
-                #region copy .ASC file to log folder
-                $copyParams = @{
-                    Path      = $file.FullName
-                    Destination = "$logFileName - $($file.Name)"
-                }
-                Copy-Item @copyParams
-
-                $mailParams.Attachments += $copyParams.Destination
-                #endregion
-                
                 #region Convert files to objects
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
@@ -213,6 +203,20 @@ Process {
                         File                = $file.BaseName
                     }
                 }
+                #endregion
+
+                #region copy .ASC file to log folder
+                $M = "Copy file '$($file.FullName)' to log folder"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+                $copyParams = @{
+                    Path        = $file.FullName
+                    Destination = "$logFileName - $($file.Name)"
+                    ErrorAction = 'Stop'
+                }
+                Copy-Item @copyParams
+
+                $mailParams.Attachments += $copyParams.Destination
                 #endregion
             }
             #endregion
