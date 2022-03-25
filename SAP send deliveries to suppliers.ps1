@@ -93,8 +93,18 @@ Begin {
             if (-not $s.MailTo) {
                 throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers' for '$($s.Name)'."
             }
-            if (-not (Test-ValidEmailAddress -EmailAddress $s.MailTo)) {
-                throw "Input file '$ImportFile': 'MailTo' value '$($s.MailTo)' is not a valid e-mail address for supplier '$($s.Name)'."
+            foreach ($mailAddress in $s.MailTo) {
+                if (-not (Test-ValidEmailAddress -EmailAddress $mailAddress)) {
+                    throw "Input file '$ImportFile': 'MailTo' value '$mailAddress' is not a valid e-mail address for supplier '$mailAddress'."
+                }
+            }
+            #endregion
+
+            #region MailBcc
+            foreach ($mailAddress in $s.MailBcc) {
+                if (-not (Test-ValidEmailAddress -EmailAddress $mailAddress)) {
+                    throw "Input file '$ImportFile': 'MailBcc' value '$mailAddress' is not a valid e-mail address for supplier '$mailAddress'."
+                }
             }
             #endregion
 
@@ -173,6 +183,18 @@ Process {
                     [PSCustomObject]@{
                         Plant               = $line.SubString(0, 4).Trim()
                         ShipmentNumber      = [int]$line.SubString(4, 10).Trim()
+                        DeliveryDate        = $(
+                            $deliveryDate = $line.SubString(231, 8).Trim()
+                            $deliveryTime = $line.SubString(239, 6).Trim()
+                            if ($deliveryDate -and $deliveryTime) {
+                                [DateTime]::ParseExact(
+                                ($deliveryDate + $deliveryTime), 'yyyyMMddHHmmss', $null
+                                )
+                            }
+                            elseif ($deliveryDate) {
+                                [DateTime]::ParseExact($deliveryDate, 'yyyyMMdd', $null)
+                            }
+                        )
                         DeliveryNumber      = [int]$line.SubString(14, 30).Trim()
                         ShipToNumber        = [int]$line.SubString(44, 10).Trim()
                         ShipToName          = $line.SubString(54, 35).Trim()
@@ -184,18 +206,6 @@ Process {
                         LoadingDate         = $(
                             if ($loadingDate = $line.SubString(223, 8).Trim()) {
                                 [DateTime]::ParseExact($loadingDate, 'yyyyMMdd', $null)
-                            }
-                        )
-                        DeliveryDate        = $(
-                            $deliveryDate = $line.SubString(231, 8).Trim()
-                            $deliveryTime = $line.SubString(239, 6).Trim()
-                            if ($deliveryDate -and $deliveryTime) {
-                                [DateTime]::ParseExact(
-                    ($deliveryDate + $deliveryTime), 'yyyyMMddHHmmss', $null
-                                )
-                            }
-                            elseif ($deliveryDate) {
-                                [DateTime]::ParseExact($deliveryDate, 'yyyyMMdd', $null)
                             }
                         )
                         TruckID             = $line.SubString(245, 20).Trim()
