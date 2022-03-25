@@ -359,7 +359,10 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             }
         }
     }
-    it 'create a sent items folder in the mailbox' {
+    It 'copy the .ASC files to the log folder' {
+        Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Picard - Test1.asc' | Should -Not -BeNullOrEmpty
+    }
+    It 'create a sent items folder in the mailbox' {
         Should -Invoke New-MailboxFolderHC -Exactly 1 -Scope Describe 
     }
     It 'send a summary mail to the user' {
