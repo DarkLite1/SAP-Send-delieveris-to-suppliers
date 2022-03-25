@@ -323,8 +323,8 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             From           = 'boss@contoso.com'
             To             = 'bob@contoso.com'
             Bcc            = @('jack@contoso.com', 'mike@contoso.com')
-            SentItemsPath  = '\PowerShell\Test (Brecht) SENT'
-            EventLogSource = 'Test (Brecht)'
+            SentItemsPath  = '\PowerShell\{0} SENT' -f $testParams.ScriptName
+            EventLogSource = $testParams.ScriptName
             Subject        = 'Picard, 2 deliveries'
             Body           = "<p>Dear</p><p>Since <b>{0}</b> there have been <b>2 deliveries</b>.</p><p><i>Check the attachments for details.</i></p>*" -f (Get-Date).addDays(-5).ToString('dd/MM/yyyy')
         }
