@@ -164,7 +164,7 @@ Process {
             #endregion
 
             $exportToExcel = foreach ($file in $ascFiles) {
-                #region Convert files to objects
+                #region Convert .ASC file to objects
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
