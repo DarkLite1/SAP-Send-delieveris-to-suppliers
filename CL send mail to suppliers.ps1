@@ -227,7 +227,7 @@ Process {
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
                 
                 $excelParams = @{
-                    Path          = "$logFileName.xlsx"
+                    Path          = "$logFileName - Summary.xlsx"
                     WorksheetName = 'Data'
                     TableName     = 'Data'
                     FreezeTopRow  = $true

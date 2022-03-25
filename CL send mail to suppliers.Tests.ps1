@@ -333,7 +333,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
     }
     Context 'export an Excel file' {
         BeforeAll {
-            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '*Picard.xlsx'
+            $testExcelLogFile = Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Picard - Summary.xlsx'
 
             $actual = Import-Excel -Path $testExcelLogFile.FullName -WorksheetName 'Data'
         }
@@ -372,8 +372,8 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             ($SentItemsPath -eq $testMail.SentItemsPath) -and
             ($EventLogSource -eq $testMail.EventLogSource) -and
             ($Subject -eq $testMail.Subject) -and
-            ($Attachments -like '* - Picard.xlsx') -and
-            ($Attachments -like '* - Test1.asc') -and
+            ($Attachments -like '* - Picard - Summary.xlsx') -and
+            ($Attachments -like '* - Picard - Test1.asc') -and
             ($Body -like $testMail.Body)
         }
     }
