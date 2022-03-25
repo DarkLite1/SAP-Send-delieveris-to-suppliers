@@ -372,8 +372,8 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             ($SentItemsPath -eq $testMail.SentItemsPath) -and
             ($EventLogSource -eq $testMail.EventLogSource) -and
             ($Subject -eq $testMail.Subject) -and
-            ($Attachments -like '*Picard.xlsx') -and
-            ($Attachments -contains $testAscFileOutParams.FilePath) -and
+            ($Attachments -like '* - Picard.xlsx') -and
+            ($Attachments -like '* - Test1.asc') -and
             ($Body -like $testMail.Body)
         }
     }

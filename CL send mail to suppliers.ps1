@@ -141,6 +141,9 @@ Process {
         foreach ($s in $Suppliers) {
             $mailParams.Attachments = @()
             
+            $logParams.Name = $s.Name
+            $logFileName = New-LogFileNameHC @logParams
+                
             #region Get .ASC files
             $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
             $M = "Get .ASC files for supplier '$($s.Name)'"
@@ -158,8 +161,18 @@ Process {
             Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             #endregion
 
-            #region Convert files to objects
             $exportToExcel = foreach ($file in $ascFiles) {
+                #region copy .ASC file to log folder
+                $copyParams = @{
+                    Path      = $file.FullName
+                    Destination = "$logFileName - $($file.Name)"
+                }
+                Copy-Item @copyParams
+
+                $mailParams.Attachments += $copyParams.Destination
+                #endregion
+                
+                #region Convert files to objects
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
@@ -200,8 +213,7 @@ Process {
                         File                = $file.BaseName
                     }
                 }
-                
-                $mailParams.Attachments += $file.FullName
+                #endregion
             }
             #endregion
 
@@ -210,10 +222,8 @@ Process {
                 $M = "Export '$($exportToExcel.Count)' objects to Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
                 
-                $logParams.Name = $s.Name
-
                 $excelParams = @{
-                    Path          = "$(New-LogFileNameHC @logParams).xlsx"
+                    Path          = "$logFileName.xlsx"
                     WorksheetName = 'Data'
                     TableName     = 'Data'
                     FreezeTopRow  = $true
