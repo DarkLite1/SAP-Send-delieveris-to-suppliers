@@ -141,7 +141,12 @@ Process {
         #endregion
 
         foreach ($s in $Suppliers) {
+            $mailParams.Attachments = @()
+            
+            #region Get .ASC files
             $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
+            $M = "Get .ASC files for supplier '$($s.Name)'"
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
 
             $getParams = @{
                 LiteralPath = $s.Path
@@ -151,12 +156,17 @@ Process {
             $ascFiles = Get-ChildItem @getParams |
             Where-Object { $_.CreationTime.Date -ge $compareDate.Date }
 
-            $mailParams.Attachments = @()
+            $M = "Found $($ascFiles.Count) .ASC files for supplier '$($s.Name)' older than '$($compareDate.Date)'"
+            Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+            #endregion
 
+            #region Convert files to objects
             $exportToExcel = foreach ($file in $ascFiles) {
+                $M = "Convert file '$($file.FullName)' to objects for Excel"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+            
                 $fileContent = Get-Content -LiteralPath $file.FullName
                 
-                #region Convert to Excel
                 foreach ($line in $fileContent) {
                     [PSCustomObject]@{
                         Plant               = $line.SubString(0, 4).Trim()
@@ -192,13 +202,16 @@ Process {
                         File                = $file.BaseName
                     }
                 }
-                #endregion
-
+                
                 $mailParams.Attachments += $file.FullName
             }
+            #endregion
 
             if ($exportToExcel) {
                 #region Export to Excel
+                $M = "Export '$($exportToExcel.Count)' objects to Excel"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
                 $excelParams = @{
                     Path          = Join-Path $logFolder ($s.Name + '.xlsx')
                     WorksheetName = 'Data'
@@ -207,6 +220,9 @@ Process {
                     AutoSize      = $true
                 }
                 $exportToExcel | Export-Excel @excelParams
+                
+                $M = "Exported '$($exportToExcel.Count)' rows to Excel file '$($excelParams.Path)'"
+                Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
                 $mailParams.Attachments += $excelParams.Path
                 #endregion
