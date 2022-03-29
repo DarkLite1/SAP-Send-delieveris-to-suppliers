@@ -229,9 +229,9 @@ Process {
                     ErrorAction = 'Stop'
                 }
                 Copy-Item @copyParams
-
-                $mailParams.Attachments += $copyParams.Destination
                 #endregion
+
+                # $mailParams.Attachments += $copyParams.Destination
             }
             #endregion
 
