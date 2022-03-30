@@ -326,7 +326,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             SentItemsPath  = '\PowerShell\{0} SENT' -f $testParams.ScriptName
             EventLogSource = $testParams.ScriptName
             Subject        = 'Picard, 2 deliveries'
-            Body           = "<p>Dear supplier</p><p>Since delivery date <b>15/03/2022</b> there have been <b>2 deliveries</b>.</p><p><i>Check the attachments for details.</i></p>*"
+            Body           = "<p>Dear supplier</p><p>Since delivery date <b>15/03/2022</b> there have been <b>2 deliveries</b>.</p><p><i>Check the attachment for details.</i></p>*"
         }
         
         .$testScript @testParams
