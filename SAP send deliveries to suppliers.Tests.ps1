@@ -380,5 +380,5 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             # ($Attachments[0] -Like '* - Picard - Test1.asc') -and
             ($Body -like $testMail.Body)
         }
-    } -tag test
+    }
 }
