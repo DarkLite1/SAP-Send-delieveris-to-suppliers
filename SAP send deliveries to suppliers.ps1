@@ -264,8 +264,7 @@ Process {
                 $mailParams.Body = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>Check the attachments for details.</i></p><p>Yours sincerely<br>Heidelbergcement</p>' -f $(
                     if (
                         $firstDeliveryDate = $exportToExcel.DeliveryDate | 
-                        Sort-Object | Where-Object { $_ } | 
-                        Select-Object -First 1
+                        Sort-Object | Select-Object -First 1
                     ) {
                         'delivery date <b>{0}</b>' -f
                         $firstDeliveryDate.ToString('dd/MM/yyyy')
