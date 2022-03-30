@@ -261,7 +261,20 @@ Process {
                 if ($s.MailBcc) { 
                     $mailParams.Bcc += $s.MailBcc 
                 }
-                $mailParams.Body = '<p>Dear supplier</p><p>Since <b>{0}</b> there {1}.</p><p><i>Check the attachments for details.</i></p><p>Yours sincerely<br>Heidelbergcement</p>' -f $compareDate.ToString('dd/MM/yyyy'), $(
+                $mailParams.Body = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>Check the attachments for details.</i></p><p>Yours sincerely<br>Heidelbergcement</p>' -f $(
+                    if (
+                        $firstDeliveryDate = $exportToExcel.DeliveryDate | 
+                        Sort-Object | Where-Object { $_ } | 
+                        Select-Object -First 1
+                    ) {
+                        'delivery date <b>{0}</b>' -f
+                        $firstDeliveryDate.ToString('dd/MM/yyyy')
+                    }
+                    else {
+                        'SAP file date <b>{0}</b>' -f 
+                        $compareDate.ToString('dd/MM/yyyy')
+                    }
+                ), $(
                     if ($exportToExcel.Count -eq 1) { 
                         'has been <b>1 delivery</b>' 
                     }
