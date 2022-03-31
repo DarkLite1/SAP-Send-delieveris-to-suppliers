@@ -176,6 +176,18 @@ Process {
             #endregion
 
             [Array]$exportToExcel = foreach ($file in $ascFiles) {
+                #region copy .ASC file to log folder
+                $M = "Copy file '$($file.FullName)' to log folder"
+                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
+
+                $copyParams = @{
+                    Path        = $file.FullName
+                    Destination = "$logFileName - $($file.Name)"
+                    ErrorAction = 'Stop'
+                }
+                Copy-Item @copyParams
+                #endregion
+
                 #region Convert .ASC file to objects
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
@@ -185,7 +197,7 @@ Process {
                 foreach ($line in $fileContent) {
                     [PSCustomObject]@{
                         Plant               = $line.SubString(0, 4).Trim()
-                        ShipmentNumber      = [int]$line.SubString(4, 10).Trim()
+                        ShipmentNumber      = $line.SubString(4, 10).Trim()
                         DeliveryDate        = $(
                             $deliveryDate = $line.SubString(231, 8).Trim()
                             $deliveryTime = $line.SubString(239, 6).Trim()
@@ -198,12 +210,12 @@ Process {
                                 [DateTime]::ParseExact($deliveryDate, 'yyyyMMdd', $null)
                             }
                         )
-                        DeliveryNumber      = [int]$line.SubString(14, 30).Trim()
-                        ShipToNumber        = [int]$line.SubString(44, 10).Trim()
+                        DeliveryNumber      = $line.SubString(14, 30).Trim()
+                        ShipToNumber        = $line.SubString(44, 10).Trim()
                         ShipToName          = $line.SubString(54, 35).Trim()
                         Address             = $line.SubString(89, 35).Trim()
                         City                = $line.SubString(124, 35).Trim()
-                        MaterialNumber      = [int]$line.SubString(159, 18).Trim()
+                        MaterialNumber      = $line.SubString(159, 18).Trim()
                         MaterialDescription = $line.SubString(177, 40).Trim()
                         Tonnage             = $line.SubString(217, 6).Trim()
                         LoadingDate         = $(
@@ -217,18 +229,6 @@ Process {
                         File                = $file.BaseName
                     }
                 }
-                #endregion
-
-                #region copy .ASC file to log folder
-                $M = "Copy file '$($file.FullName)' to log folder"
-                Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-
-                $copyParams = @{
-                    Path        = $file.FullName
-                    Destination = "$logFileName - $($file.Name)"
-                    ErrorAction = 'Stop'
-                }
-                Copy-Item @copyParams
                 #endregion
 
                 # $mailParams.Attachments += $copyParams.Destination
