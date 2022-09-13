@@ -192,9 +192,14 @@ Process {
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
             
-                $fileContent = Get-Content -LiteralPath $file.FullName
+                $params = @{
+                    LiteralPath = $file.FullName
+                    Encoding    = 'UTF8'
+                }
+                $fileContent = Get-Content @params
                 
                 foreach ($line in $fileContent) {
+                    Write-Verbose "Convert line '$line'"
                     [PSCustomObject]@{
                         Plant               = $line.SubString(0, 4).Trim()
                         ShipmentNumber      = $line.SubString(4, 10).Trim()
