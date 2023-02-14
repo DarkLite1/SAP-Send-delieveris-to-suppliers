@@ -266,7 +266,7 @@ Process {
                 if ($s.MailBcc) { 
                     $mailParams.Bcc += $s.MailBcc 
                 }
-                $mailParams.Body = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>* Check the attachment for details</i></p><p>Yours sincerely<br>Heidelbergcement</p>' -f $(
+                $mailParams.Body = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>* Check the attachment for details</i></p><p>Yours sincerely<br>Heidelberg Materials</p>' -f $(
                     if (
                         $firstDeliveryDate = $exportToExcel.DeliveryDate | 
                         Sort-Object | Select-Object -First 1
