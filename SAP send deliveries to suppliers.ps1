@@ -7,13 +7,13 @@
     Send a mail to the suppliers about their deliveries the day before.
 
 .DESCRIPTION
-    SAP generates a .ASC file that contains the deliveries of the previous day. 
+    SAP generates a .ASC file that contains the deliveries of the previous day.
     This file is used to calculate transport costs by the suppliers.
 
-    The file created on the day that the script executes is the one that is 
+    The file created on the day that the script executes is the one that is
     converted to an Excel file and send to the supplier by mail.
 
-    In case there is no .ASC file created on the day that the script runs, 
+    In case there is no .ASC file created on the day that the script runs,
     nothing is done and no mail is sent out.
 
 .PARAMETER Suppliers.NewerThanDays
@@ -34,20 +34,6 @@ Param (
 )
 
 Begin {
-    Function Test-ValidEmailAddress { 
-        Param(
-            [Parameter(Mandatory)]
-            [String]$EmailAddress
-        )
-        try {
-            $null = [MailAddress]$EmailAddress
-            return $true
-        }
-        catch {
-            return $false
-        }
-    }
-
     try {
         Import-EventLogParamsHC -Source $ScriptName
         Write-EventLog @EventStartParams
@@ -65,14 +51,14 @@ Begin {
             throw "Failed creating the log folder '$LogFolder': $_"
         }
         #endregion
-        
+
         #region Import .json file
         $M = "Import .json file '$ImportFile'"
         Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
-        
+
         $file = Get-Content $ImportFile -Raw -EA Stop | ConvertFrom-Json
         #endregion
-        
+
         #region Test .json file properties
         if (-not ($MailFrom = $file.MailFrom)) {
             throw "Input file '$ImportFile': No 'MailFrom' addresses found."
@@ -95,23 +81,10 @@ Begin {
                 throw "Input file '$ImportFile': 'Path' folder '$($s.Path)' not found for '$($s.Name)'"
             }
             #endregion
-            
+
             #region MailTo
             if (-not $s.MailTo) {
                 throw "Input file '$ImportFile': Property 'MailTo' is missing in 'Suppliers' for '$($s.Name)'."
-            }
-            foreach ($mailAddress in $s.MailTo) {
-                if (-not (Test-ValidEmailAddress -EmailAddress $mailAddress)) {
-                    throw "Input file '$ImportFile': 'MailTo' value '$mailAddress' is not a valid e-mail address for supplier '$($s.Name)'."
-                }
-            }
-            #endregion
-
-            #region MailBcc
-            foreach ($mailAddress in $s.MailBcc) {
-                if (-not (Test-ValidEmailAddress -EmailAddress $mailAddress)) {
-                    throw "Input file '$ImportFile': 'MailBcc' value '$mailAddress' is not a valid e-mail address for supplier '$($s.Name)'."
-                }
             }
             #endregion
 
@@ -119,7 +92,10 @@ Begin {
             if ($s.PSObject.Properties.Name -notContains 'NewerThanDays') {
                 throw "Input file '$ImportFile': Property 'NewerThanDays' is missing for supplier '$($s.Name)'. Use number '0' to only handles files with creation date today."
             }
-            if (-not ($s.NewerThanDays -is [int])) {
+            try {
+                $null = $s.NewerThanDays.ToInt16($null)
+            }
+            catch {
                 throw "Input file '$ImportFile': 'NewerThanDays' needs to be a number, the value '$($s.NewerThanDays)' is not supported. Use number '0' to only handle files with creation date today."
             }
             #endregion
@@ -136,32 +112,26 @@ Begin {
 
 Process {
     try {
-        $mailParams = @{
-            Service        = New-EwsServiceHC
-            From           = $MailFrom
-            SentItemsPath  = ('\PowerShell\' + $ScriptName + ' SENT')
-            EventLogSource = $ScriptName
-            ErrorAction    = 'Stop'
-            Body           = 'test'
-        }
-        
-        #region Create mailbox folders
-        $mailFolderParams = @{
-            Mailbox = $mailParams.From
-            Path    = $mailParams.SentItemsPath
-            Service = $mailParams.Service
-        }
-        New-MailboxFolderHC @mailFolderParams
-        #endregion
-
         foreach ($s in $Suppliers) {
-            $mailParams.Attachments = @()
-            
+            $mailParams = @{
+                SaveToSentItems = $false
+                Message         = @{
+                    Subject     = $null
+                    Body        = @{
+                        ContentType = 'Text'
+                        Content     = $null
+                    }
+                    Attachments = $null
+                }
+            }
+
+            $mailParams.Message.ToRecipients = ConvertTo-MgUserMailRecipientHC -MailAddress $s.MailTo
+
             #region Create log file name
             $logParams.Name = $s.Name
             $logFileName = New-LogFileNameHC @logParams
             #endregion
-                
+
             #region Get .ASC files
             $compareDate = (Get-Date).addDays(-$s.NewerThanDays)
             $M = "Get .ASC files for supplier '$($s.Name)'"
@@ -169,7 +139,7 @@ Process {
 
             $getParams = @{
                 LiteralPath = $s.Path
-                Filter      = '*.ASC' 
+                Filter      = '*.ASC'
                 File        = $true
             }
             $ascFiles = Get-ChildItem @getParams |
@@ -195,13 +165,13 @@ Process {
                 #region Convert .ASC file to objects
                 $M = "Convert file '$($file.FullName)' to objects for Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-            
+
                 $params = @{
                     LiteralPath = $file.FullName
                     Encoding    = 'UTF8'
                 }
                 $fileContent = Get-Content @params
-                
+
                 foreach ($line in $fileContent) {
                     Write-Verbose "Convert line '$line'"
                     [PSCustomObject]@{
@@ -239,8 +209,6 @@ Process {
                     }
                 }
                 #endregion
-
-                # $mailParams.Attachments += $copyParams.Destination
             }
             #endregion
 
@@ -248,7 +216,7 @@ Process {
                 #region Export to Excel
                 $M = "Export '$($exportToExcel.Count)' objects to Excel"
                 Write-Verbose $M; Write-EventLog @EventVerboseParams -Message $M
-                
+
                 $excelParams = @{
                     Path          = "$logFileName - Summary.xlsx"
                     WorksheetName = 'Data'
@@ -261,42 +229,44 @@ Process {
                 $M = "Exported '$($exportToExcel.Count)' rows to Excel file '$($excelParams.Path)'"
                 Write-Verbose $M; Write-EventLog @EventOutParams -Message $M
 
-                $mailParams.Attachments += $excelParams.Path
+                $mailParams.Message.Attachments = ConvertTo-MgUserMailAttachmentHC -Path  $excelParams.Path
                 #endregion
 
                 #region Send mail to end user
-                $mailParams.To = $s.MailTo
-                $mailParams.Bcc = @($ScriptAdmin)
-                if ($s.MailBcc) { 
-                    $mailParams.Bcc += $s.MailBcc 
+                $mailParams.Message.BccRecipients = if ($s.MailBcc) {
+                    ConvertTo-MgUserMailRecipientHC -MailAddress $s.MailBcc
                 }
-                $mailParams.Body = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>* Check the attachment for details</i></p><p>Yours sincerely<br>Heidelberg Materials</p>' -f $(
+                else {
+                    ConvertTo-MgUserMailRecipientHC -MailAddress $ScriptAdmin
+                }
+
+                $mailParams.Message.Body.Content = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>* Check the attachment for details</i></p><p>Yours sincerely<br>Heidelberg Materials</p>' -f $(
                     if (
-                        $firstDeliveryDate = $exportToExcel.DeliveryDate | 
+                        $firstDeliveryDate = $exportToExcel.DeliveryDate |
                         Sort-Object | Select-Object -First 1
                     ) {
                         'delivery date <b>{0}</b>' -f
                         $firstDeliveryDate.ToString('dd/MM/yyyy')
                     }
                     else {
-                        'SAP file date <b>{0}</b>' -f 
+                        'SAP file date <b>{0}</b>' -f
                         $compareDate.ToString('dd/MM/yyyy')
                     }
                 ), $(
-                    if ($exportToExcel.Count -eq 1) { 
-                        'has been <b>1 delivery</b>' 
+                    if ($exportToExcel.Count -eq 1) {
+                        'has been <b>1 delivery</b>'
                     }
-                    else { 
+                    else {
                         "have been <b>$($exportToExcel.Count) deliveries</b>"
                     }
                 )
-                $mailParams.Subject = '{0}, {1} {2}' -f  
+                $mailParams.Message.Subject = '{0}, {1} {2}' -f
                 $s.Name, $exportToExcel.Count, $(
                     if ($exportToExcel.Count -eq 1) { 'delivery' }
                     else { 'deliveries' }
                 )
-                
-                Send-MailAuthenticatedHC @mailParams
+
+                Send-MgUserMail -UserId $MailFrom -BodyParameter $mailParams -EA Stop
                 #endregion
             }
         }

@@ -14,25 +14,21 @@ BeforeAll {
         LogFolder   = New-Item 'TestDrive:/log' -ItemType Directory
         ScriptAdmin = 'admin@contoso.com'
     }
-    
-    Mock New-MailboxFolderHC
-    Mock Send-MailAuthenticatedHC -RemoveParameterValidation 'From'
+
+    Mock Send-MgUserMail
     Mock Send-MailHC
     Mock Write-EventLog
-    Mock New-EwsServiceHC {
-        New-Object Microsoft.Exchange.WebServices.Data.ExchangeService
-    }
 }
 Describe 'the mandatory parameters are' {
     It '<_>' -ForEach @('ImportFile', 'ScriptName') {
-        (Get-Command $testScript).Parameters[$_].Attributes.Mandatory | 
+        (Get-Command $testScript).Parameters[$_].Attributes.Mandatory |
         Should -BeTrue
     }
 }
 Describe 'send an e-mail to the admin when' {
     BeforeAll {
         $MailAdminParams = {
-            ($To -eq $testParams.ScriptAdmin) -and ($Priority -eq 'High') -and 
+            ($To -eq $testParams.ScriptAdmin) -and ($Priority -eq 'High') -and
             ($Subject -eq 'FAILURE')
         }
     }
@@ -43,7 +39,7 @@ Describe 'send an e-mail to the admin when' {
         .$testScript @testNewParams
 
         Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
-            (&$MailAdminParams) -and 
+            (&$MailAdminParams) -and
             ($Message -like '*Failed creating the log folder*')
         }
     }
@@ -51,9 +47,9 @@ Describe 'send an e-mail to the admin when' {
         It 'is not found' {
             $testNewParams = $testParams.clone()
             $testNewParams.ImportFile = 'nonExisting.json'
-    
+
             .$testScript @testNewParams
-    
+
             Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                     (&$MailAdminParams) -and ($Message -like "Cannot find path*nonExisting.json*")
             }
@@ -72,9 +68,9 @@ Describe 'send an e-mail to the admin when' {
                         }
                     )
                 } | ConvertTo-Json | Out-File @testOutParams
-                
+
                 .$testScript @testParams
-                
+
                 Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                     (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'MailFrom' addresses found*")
                 }
@@ -86,9 +82,9 @@ Describe 'send an e-mail to the admin when' {
                 @{
                     MailFrom = @('bob@contoso.com')
                 } | ConvertTo-Json | Out-File @testOutParams
-                
+
                 .$testScript @testParams
-                
+
                 Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                     (&$MailAdminParams) -and ($Message -like "*$ImportFile*No 'Suppliers' found*")
                 }
@@ -109,9 +105,9 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'Path' is missing in 'Suppliers'*")
                     }
@@ -131,9 +127,9 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*'Path' folder 'C:/notExisting' not found*")
                     }
@@ -153,9 +149,9 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'Name' is missing in 'Suppliers'*")
                     }
@@ -175,33 +171,11 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'MailTo' is missing in 'Suppliers'*")
-                    }
-                    Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
-                        $EntryType -eq 'Error'
-                    }
-                }
-                It 'MailTo is not an email address' {
-                    @{
-                        MailFrom  = @('bob@contoso.com')
-                        Suppliers = @(
-                            @{
-                                Name          = 'Picard'
-                                Path          = 'TestDrive:/'
-                                MailTo        = 'invalid'
-                                NewerThanDays = 0
-                            }
-                        )
-                    } | ConvertTo-Json | Out-File @testOutParams
-                    
-                    .$testScript @testParams
-                    
-                    Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
-                        (&$MailAdminParams) -and ($Message -like "*$ImportFile*'MailTo' value 'invalid' is not a valid e-mail address for supplier 'Picard'*")
                     }
                     Should -Invoke Write-EventLog -Exactly 1 -ParameterFilter {
                         $EntryType -eq 'Error'
@@ -219,9 +193,9 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*Property 'NewerThanDays' is missing*")
                     }
@@ -241,9 +215,9 @@ Describe 'send an e-mail to the admin when' {
                             }
                         )
                     } | ConvertTo-Json | Out-File @testOutParams
-                    
+
                     .$testScript @testParams
-                    
+
                     Should -Invoke Send-MailHC -Exactly 1 -ParameterFilter {
                         (&$MailAdminParams) -and ($Message -like "*$ImportFile*'NewerThanDays' needs to be a number, the value 'a' is not supported. Use number '0' to only handle files with creation date today.*")
                     }
@@ -329,7 +303,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
             Subject        = 'Picard, 2 deliveries'
             Body           = "<p>Dear supplier</p><p>Since delivery date <b>15/03/2022</b> there have been <b>2 deliveries</b>.</p><p><i>* Check the attachment for details</i></p>*"
         }
-        
+
         .$testScript @testParams
     }
     Context 'export an Excel file' {
@@ -352,7 +326,7 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
                 @(
                     'Plant', 'DeliveryNumber', 'ShipToNumber', 'ShipToName',
                     'Address', 'City', 'MaterialNumber', 'MaterialDescription',
-                    'Tonnage', 'LoadingDate', 'TruckID', 'PickingStatus', 
+                    'Tonnage', 'LoadingDate', 'TruckID', 'PickingStatus',
                     'SiloBulkID', 'File'
                 ) | ForEach-Object {
                     $actualRow.$_ | Should -Be $testRow.$_
@@ -363,23 +337,19 @@ NL1121058805192104737268                    0021700679MEBIN Tessel DENBOSCH     
     It 'copy the .ASC files to the log folder' {
         Get-ChildItem $testParams.LogFolder -File -Recurse -Filter '* - Picard - Test1.asc' | Should -Not -BeNullOrEmpty
     }
-    It 'create a sent items folder in the mailbox' {
-        Should -Invoke New-MailboxFolderHC -Exactly 1 -Scope Describe 
-    }
     It 'send a summary mail to the user' {
-        Should -Invoke Send-MailAuthenticatedHC -Exactly 1 -Scope Describe -ParameterFilter {
-            ($From -eq $testMail.From) -and
-            ($To -eq $testMail.To) -and
-            ($Bcc -contains $ScriptAdmin) -and
-            ($Bcc -contains $testMail.Bcc[0]) -and
-            ($Bcc -contains $testMail.Bcc[1]) -and
-            ($SentItemsPath -eq $testMail.SentItemsPath) -and
-            ($EventLogSource -eq $testMail.EventLogSource) -and
-            ($Subject -eq $testMail.Subject) -and
-            ($Attachments.Count -eq 1) -and
-            ($Attachments[0] -like '* - Picard - Summary.xlsx') -and
-            # ($Attachments[0] -Like '* - Picard - Test1.asc') -and
-            ($Body -like $testMail.Body)
+        Should -Invoke Send-MgUserMail -Exactly 1 -Scope Describe -ParameterFilter {
+            ($UserId -eq $testMail.From) -and
+            ($BodyParameter.SaveToSentItems -eq $false) -and
+            ($BodyParameter.Message.ToRecipients.EmailAddress.Address -eq $testMail.To) -and
+            ($BodyParameter.Message.BccRecipients[0].EmailAddress.Address -eq $testMail.Bcc[0]) -and
+            ($BodyParameter.Message.BccRecipients[1].EmailAddress.Address -eq $testMail.Bcc[1]) -and
+            ($BodyParameter.Message.Subject -eq $testMail.Subject) -and
+            ($BodyParameter.Message.Attachments.Name -like '* - Picard - Summary.xlsx') -and
+            ($BodyParameter.Message.Attachments.Count -eq 1) -and
+            # ($BodyParameter.Message.Attachments[0].ContentBytes) -and
+            # ($BodyParameter.Message.Attachments.'@odata.type' -eq '#microsoft.graph.fileAttachment') -and
+            ($BodyParameter.Message.Body.Content -like $testMail.Body)
         }
     }
 }
