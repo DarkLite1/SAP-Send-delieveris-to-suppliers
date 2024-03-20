@@ -233,12 +233,8 @@ Process {
                 #endregion
 
                 #region Send mail to end user
-                $mailParams.Message.BccRecipients = if ($s.MailBcc) {
-                    ConvertTo-MgUserMailRecipientHC -MailAddress $s.MailBcc
-                }
-                else {
-                    ConvertTo-MgUserMailRecipientHC -MailAddress $ScriptAdmin
-                }
+                $s.MailBcc += $ScriptAdmin
+                $mailParams.Message.BccRecipients = ConvertTo-MgUserMailRecipientHC -MailAddress $s.MailBcc
 
                 $mailParams.Message.Body.Content = '<p>Dear supplier</p><p>Since {0} there {1}.</p><p><i>* Check the attachment for details</i></p><p>Yours sincerely<br>Heidelberg Materials</p>' -f $(
                     if (
