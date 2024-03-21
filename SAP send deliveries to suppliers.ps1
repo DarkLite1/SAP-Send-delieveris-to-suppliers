@@ -118,7 +118,7 @@ Process {
                 Message         = @{
                     Subject     = $null
                     Body        = @{
-                        ContentType = 'Text'
+                        ContentType = 'html'
                         Content     = $null
                     }
                     Attachments = $null
