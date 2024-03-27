@@ -1,6 +1,6 @@
 #Requires -Version 7
 #Requires -Modules ImportExcel
-#Requires -Modules Toolbox.HTML, Toolbox.EventLog
+#Requires -Modules Toolbox.HTML, Toolbox.EventLog, Toolbox.MgGraph
 
 <#
 .SYNOPSIS
